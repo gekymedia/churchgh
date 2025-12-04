@@ -3,8 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Lead;
-use App\Services\Notifications\Notifier;
 use Illuminate\Http\Request;
+use App\Jobs\SendNotificationMessage;
+use App\Support\Phone;
 
 /**
  * Class EvangelismController
@@ -27,41 +28,37 @@ class EvangelismController extends Controller
     /**
      * Handle sending of evangelism messages.
      */
-    public function send(Request $request, Notifier $notifier)
+    public function send(Request $request)
     {
         $data = $request->validate([
             'channel'  => 'required|in:sms,whatsapp',
-            'lead_id'  => 'nullable|exists:leads,id',
+            'lead_id'  => 'required_without:broadcast|nullable|exists:leads,id',
             'broadcast'=> 'nullable|boolean',
             'message'  => 'required|string|max:1000',
         ]);
+        $channel = $data['channel'];
+        $message = $data['message'];
         $count = 0;
         if ($request->boolean('broadcast')) {
-            Lead::whereNotNull('phone')->chunk(100, function ($chunk) use ($notifier, $data, &$count) {
-                foreach ($chunk as $lead) {
-                    $to = preg_replace('/[^0-9+]/', '', $lead->phone ?? '');
-                    if (!$to) {
-                        continue;
+            Lead::whereNotNull('phone')
+                ->orderBy('id')
+                ->chunkById(100, function ($chunk) use ($channel, $message, &$count) {
+                    foreach ($chunk as $lead) {
+                        $to = Phone::formatE164($lead->phone);
+                        if (!$to) {
+                            continue;
+                        }
+                        SendNotificationMessage::dispatch($channel, $to, $message);
+                        $count++;
                     }
-                    if ($data['channel'] === 'sms') {
-                        $notifier->sms($to, $data['message']);
-                    } else {
-                        $notifier->whatsapp($to, $data['message']);
-                    }
-                    $count++;
-                }
-            });
+                });
         } else {
             $lead = Lead::findOrFail($data['lead_id']);
-            $to = preg_replace('/[^0-9+]/', '', $lead->phone ?? '');
+            $to = Phone::formatE164($lead->phone);
             if (!$to) {
                 return back()->with('error', 'Lead has no phone number');
             }
-            if ($data['channel'] === 'sms') {
-                $notifier->sms($to, $data['message']);
-            } else {
-                $notifier->whatsapp($to, $data['message']);
-            }
+            SendNotificationMessage::dispatch($channel, $to, $message);
             $count = 1;
         }
         return back()->with('success', "Queued {$count} message(s).");

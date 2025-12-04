@@ -1,6 +1,6 @@
 # churchgh – Laravel Overlay (App Code)
 
-This ZIP contains the **application code overlay** for a Laravel 11 project named *churchgh*.
+This ZIP contains the **application code overlay** for a Laravel 12 project named *churchgh*.
 It includes models, controllers, migrations, seeders, routes and Blade views for a church management system:
 - Members & Families
 - Services (meetings), Attendance
@@ -13,7 +13,7 @@ It includes models, controllers, migrations, seeders, routes and Blade views for
 
 ## Quick Setup
 
-1) **Create a fresh Laravel app** (Laravel 11+ recommended):
+1) **Create a fresh Laravel app** (Laravel 12+ recommended):
 ```bash
 composer create-project laravel/laravel churchgh
 ```
@@ -34,10 +34,12 @@ DB_CONNECTION=sqlite
 DB_DATABASE=./database/database.sqlite
 ```
 
-4) **Install dependencies and key:**
+4) **Install dependencies, build assets and key:**
 ```bash
 composer install
 php artisan key:generate
+npm install
+npm run build
 ```
 
 5) **Migrate & seed:**
@@ -51,12 +53,7 @@ php artisan serve
 ```
 Open http://127.0.0.1:8000
 
-> Optional: For auth scaffolding, install Breeze:
-```bash
-composer require laravel/breeze --dev
-php artisan breeze:install blade
-npm install && npm run build
-```
+> Optional: Install Breeze or your preferred auth stack if you need UI-driven authentication.
 
 ## Routes
 
@@ -70,4 +67,29 @@ npm install && npm run build
 
 ## Notes
 - This overlay avoids vendor files. Use Composer to install the framework.
-- All features are **vanilla Blade + Bootstrap** ready (no JS build required).
+- Front-end assets are built via Vite (`npm run dev` during development, `npm run build` for production).
+
+## Messaging Drivers
+
+Outbound SMS/WhatsApp deliveries now run through queued jobs. Configure the drivers via `.env`:
+
+```
+SMS_DRIVER=log            # or hubtel
+WHATSAPP_DRIVER=log       # or meta
+DEFAULT_COUNTRY_CODE=233  # converts 020xxxxxxx -> +23320xxxxxxx
+
+# Hubtel
+HUBTEL_CLIENT_ID=
+HUBTEL_CLIENT_SECRET=
+HUBTEL_FROM=ChurchGH
+
+# Meta Cloud API
+WA_CLOUD_TOKEN=
+WA_CLOUD_PHONE_ID=
+```
+
+Start a worker after dispatching notifications:
+
+```bash
+php artisan queue:work
+```

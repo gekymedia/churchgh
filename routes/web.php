@@ -27,9 +27,11 @@ Route::resource('events', EventController::class)->except(['show']);
 Route::get('attendances', [AttendanceController::class, 'index'])->name('attendances.index');
 Route::post('attendances/mark', [AttendanceController::class, 'store'])->name('attendances.store');
 
-// Notificaiton
-Route::get('notification', [NotificationController::class, 'create'])->name('notifications.create');
-Route::post('notification/send', [NotificationController::class, 'send'])->name('notifications.send');
+// Notifications
+Route::prefix('notifications')->name('notifications.')->group(function () {
+    Route::get('/', [NotificationController::class, 'create'])->name('create');
+    Route::post('/', [NotificationController::class, 'send'])->name('send');
+});
 
 // Evangelism
 Route::get('evangelism', [EvangelismController::class, 'create'])->name('evangelism.create');
