@@ -7,4 +7,9 @@ return [
         'client_secret' => env('HUBTEL_CLIENT_SECRET'),
         'from' => env('HUBTEL_FROM', 'ChurchGH'),
     ],
+
+    'paystack' => [
+        'public_key' => env('PAYSTACK_PUBLIC_KEY'),
+        'secret_key' => env('PAYSTACK_SECRET_KEY'),
+    ],
 ];

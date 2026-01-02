@@ -7,9 +7,38 @@ use Illuminate\Http\Request;
 
 class MemberController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $members = Member::latest()->paginate(15);
+        $query = Member::query();
+
+        // Search functionality
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('first_name', 'like', "%{$search}%")
+                  ->orWhere('last_name', 'like', "%{$search}%")
+                  ->orWhere('phone', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
+        // Filter by membership status
+        if ($request->filled('status')) {
+            $query->where('membership_status', $request->status);
+        }
+
+        // Filter by gender
+        if ($request->filled('gender')) {
+            $query->where('gender', $request->gender);
+        }
+
+        // Filter by marital status
+        if ($request->filled('marital_status')) {
+            $query->where('marital_status', $request->marital_status);
+        }
+
+        $members = $query->latest()->paginate(15)->withQueryString();
+        
         return view('members.index', compact('members'));
     }
 
@@ -33,6 +62,12 @@ class MemberController extends Controller
 
         Member::create($data);
         return redirect()->route('members.index')->with('success', 'Member created.');
+    }
+
+    public function show(Member $member)
+    {
+        $member->load('positions', 'ministries', 'user');
+        return view('members.show', compact('member'));
     }
 
     public function edit(Member $member)

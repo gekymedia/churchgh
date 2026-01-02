@@ -26,6 +26,9 @@ class Followup extends Model
         'followup_date',
         'note',
         'completed_at',
+        'category',
+        'assigned_user_id',
+        'status',
     ];
 
     /**
@@ -49,10 +52,21 @@ class Followup extends Model
     }
 
     /**
+     * Get the user assigned to handle this follow‑up (e.g., a pastor or leader).
+     */
+    public function assignedUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'assigned_user_id');
+    }
+
+    /**
      * Determine if the follow‑up has been marked as completed.
+     *
+     * A follow‑up is considered completed if it has a non‑null
+     * completed_at timestamp or its status has been set to 'closed'.
      */
     public function getIsCompletedAttribute(): bool
     {
-        return !is_null($this->completed_at);
+        return !is_null($this->completed_at) || ($this->status === 'closed');
     }
 }

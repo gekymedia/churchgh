@@ -7,9 +7,40 @@ use App\Models\Event;
 
 class EventController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $events = Event::latest()->paginate(15);
+        $query = Event::query();
+
+        // Search functionality
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                  ->orWhere('location', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%");
+            });
+        }
+
+        // Filter by date range
+        if ($request->filled('date_from')) {
+            $query->whereDate('starts_at', '>=', $request->date_from);
+        }
+
+        if ($request->filled('date_to')) {
+            $query->whereDate('starts_at', '<=', $request->date_to);
+        }
+
+        // Filter by upcoming/past
+        if ($request->filled('time_filter')) {
+            if ($request->time_filter === 'upcoming') {
+                $query->where('starts_at', '>=', now());
+            } elseif ($request->time_filter === 'past') {
+                $query->where('starts_at', '<', now());
+            }
+        }
+
+        $events = $query->latest('starts_at')->paginate(15)->withQueryString();
+        
         return view('events.index', compact('events'));
     }
 

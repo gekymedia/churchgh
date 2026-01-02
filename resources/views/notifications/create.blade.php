@@ -11,14 +11,23 @@
         <select name="channel" class="form-select">
           <option value="sms">SMS</option>
           <option value="whatsapp">WhatsApp</option>
+          <option value="telegram">Telegram</option>
+          <option value="gekychat">GekyChat</option>
+          <option value="email">Email</option>
         </select>
       </div>
       <div class="col-md-4">
         <label class="form-label">Member (leave blank to broadcast)</label>
-        <select name="member_id" class="form-select">
+        <select name="member_id" class="form-select" id="memberSelect" style="width: 100%;">
           <option value="">-- Select Member --</option>
           @foreach($members as $m)
-            <option value="{{ $m->id }}">{{ $m->first_name }} {{ $m->last_name }} ({{ $m->phone }})</option>
+            <option value="{{ $m->id }}" 
+                    data-phone="{{ $m->phone }}" 
+                    data-email="{{ $m->email }}">
+              {{ $m->first_name }} {{ $m->last_name }} 
+              @if($m->phone) ({{ $m->phone }}) @endif
+              @if($m->email) [{{ $m->email }}] @endif
+            </option>
           @endforeach
         </select>
       </div>
@@ -27,6 +36,10 @@
           <input class="form-check-input" type="checkbox" name="broadcast" value="1" id="broadcast">
           <label class="form-check-label" for="broadcast">Broadcast to all members</label>
         </div>
+      </div>
+      <div class="col-12" id="emailSubjectField" style="display: none;">
+        <label class="form-label">Email Subject</label>
+        <input type="text" name="subject" class="form-control" placeholder="Notification from ChurchGH">
       </div>
       <div class="col-12">
         <label class="form-label">Message</label>
@@ -46,27 +59,53 @@
   </div>
 </div>
 
-<!-- Inline script: populate message textarea from template -->
+<!-- Select2 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+
+<!-- jQuery and Select2 JS -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
 <script>
-  (function(){
+  $(document).ready(function(){
+    // Initialize Select2 for member selection
+    $('#memberSelect').select2({
+      theme: 'bootstrap-5',
+      placeholder: 'Search and select a member...',
+      allowClear: true,
+      width: '100%',
+    });
+
     const templateSelect = document.getElementById('templateSelect');
+    const channelSelect = document.querySelector('select[name="channel"]');
+    const emailSubjectField = document.getElementById('emailSubjectField');
+    
+    // Show/hide email subject field based on channel
+    if(channelSelect && emailSubjectField){
+      function toggleEmailSubject(){
+        emailSubjectField.style.display = channelSelect.value === 'email' ? 'block' : 'none';
+      }
+      channelSelect.addEventListener('change', toggleEmailSubject);
+      toggleEmailSubject(); // Initial check
+    }
+    
+    // Template selection
     if(templateSelect){
       templateSelect.addEventListener('change', function(){
         const textarea = this.closest('form').querySelector('textarea[name="message"]');
         if(!textarea) return;
         const selected = this.value;
         if(selected){
-          const memberSelect = this.closest('form').querySelector('select[name="member_id"]');
+          const selectedMember = $('#memberSelect').select2('data');
           let name = '';
-          if(memberSelect && memberSelect.value){
-            // Get selected option text and extract name (before first parenthesis)
-            const opt = memberSelect.options[memberSelect.selectedIndex].text;
-            name = opt.split('(')[0].trim();
+          if(selectedMember && selectedMember.length > 0){
+            name = selectedMember[0].text.split('(')[0].trim().split('[')[0].trim();
           }
           textarea.value = selected.replace('{{"{{"}}name}}', name || 'friend');
         }
       });
     }
-  })();
+  });
 </script>
 @endsection

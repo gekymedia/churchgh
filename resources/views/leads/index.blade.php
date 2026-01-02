@@ -12,6 +12,27 @@
   </div>
 </div>
 
+<!-- Search Form -->
+<div class="card mb-4">
+  <div class="card-body">
+    <form method="GET" action="{{ route('leads.index') }}" class="row g-3">
+      <div class="col-md-10">
+        <label for="search" class="form-label">Search</label>
+        <input type="text" class="form-control" id="search" name="search" 
+               value="{{ request('search') }}" placeholder="Name, phone, email, or notes...">
+      </div>
+      <div class="col-md-2 d-flex align-items-end">
+        <button type="submit" class="btn btn-primary w-100 me-2">
+          <i class="fas fa-search"></i> Search
+        </button>
+        <a href="{{ route('leads.index') }}" class="btn btn-outline-secondary">
+          <i class="fas fa-times"></i>
+        </a>
+      </div>
+    </form>
+  </div>
+</div>
+
 <table class="table table-bordered table-striped">
   <thead>
     <tr>

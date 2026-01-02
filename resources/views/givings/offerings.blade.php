@@ -2,6 +2,65 @@
 @section('title','Offerings')
 @section('content')
 <h3>Offerings</h3>
+
+<!-- Search and Filter Form -->
+<div class="card mb-3">
+  <div class="card-body">
+    <form method="GET" action="{{ route('offerings.index') }}" class="row g-3">
+      <div class="col-md-2">
+        <label for="search" class="form-label">Search</label>
+        <input type="text" class="form-control" id="search" name="search" 
+               value="{{ request('search') }}" placeholder="Member, category, reference...">
+      </div>
+      <div class="col-md-2">
+        <label for="member_id" class="form-label">Member</label>
+        <select class="form-select" id="member_id" name="member_id" style="width: 100%;">
+          <option value="">All</option>
+          @foreach($members as $m)
+            <option value="{{ $m->id }}" {{ request('member_id') == $m->id ? 'selected' : '' }}>
+              {{ $m->first_name }} {{ $m->last_name }}
+            </option>
+          @endforeach
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label for="category" class="form-label">Category</label>
+        <select class="form-select" id="category" name="category">
+          <option value="">All</option>
+          <option value="Sunday" {{ request('category') == 'Sunday' ? 'selected' : '' }}>Sunday</option>
+          <option value="Special" {{ request('category') == 'Special' ? 'selected' : '' }}>Special</option>
+          <option value="Building Fund" {{ request('category') == 'Building Fund' ? 'selected' : '' }}>Building Fund</option>
+          <option value="Missions" {{ request('category') == 'Missions' ? 'selected' : '' }}>Missions</option>
+          <option value="Thanksgiving" {{ request('category') == 'Thanksgiving' ? 'selected' : '' }}>Thanksgiving</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label for="date_from" class="form-label">From Date</label>
+        <input type="date" class="form-control" id="date_from" name="date_from" 
+               value="{{ request('date_from') }}">
+      </div>
+      <div class="col-md-2">
+        <label for="date_to" class="form-label">To Date</label>
+        <input type="date" class="form-control" id="date_to" name="date_to" 
+               value="{{ request('date_to') }}">
+      </div>
+      <div class="col-md-2">
+        <label for="amount_min" class="form-label">Min Amount</label>
+        <input type="number" step="0.01" class="form-control" id="amount_min" name="amount_min" 
+               value="{{ request('amount_min') }}" placeholder="0.00">
+      </div>
+      <div class="col-12">
+        <button type="submit" class="btn btn-primary me-2">
+          <i class="fas fa-search"></i> Filter
+        </button>
+        <a href="{{ route('offerings.index') }}" class="btn btn-outline-secondary">
+          <i class="fas fa-times"></i> Clear
+        </a>
+      </div>
+    </form>
+  </div>
+</div>
+
 <div class="card mb-3">
   <div class="card-body">
     <form class="row g-2" method="POST" action="{{ route('offerings.store') }}">
@@ -40,4 +99,23 @@
   </tbody>
 </table>
 {{ $offerings->links() }}
+
+<!-- Select2 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+
+<!-- jQuery and Select2 JS -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<script>
+  $(document).ready(function(){
+    $('#member_id').select2({
+      theme: 'bootstrap-5',
+      placeholder: 'Search and select a member...',
+      allowClear: true,
+      width: '100%',
+    });
+  });
+</script>
 @endsection

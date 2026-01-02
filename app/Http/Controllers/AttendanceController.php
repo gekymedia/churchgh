@@ -9,10 +9,48 @@ use App\Models\Member;
 
 class AttendanceController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $records = Attendance::with(['member','service'])->latest()->paginate(20);
-        return view('attendances.index', compact('records'));
+        $query = Attendance::with(['member','service']);
+
+        // Search by member name
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->whereHas('member', function($q) use ($search) {
+                $q->where('first_name', 'like', "%{$search}%")
+                  ->orWhere('last_name', 'like', "%{$search}%");
+            });
+        }
+
+        // Filter by service
+        if ($request->filled('service_id')) {
+            $query->where('service_id', $request->service_id);
+        }
+
+        // Filter by status
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        // Filter by date range
+        if ($request->filled('date_from')) {
+            $query->whereHas('service', function($q) use ($request) {
+                $q->whereDate('starts_at', '>=', $request->date_from);
+            });
+        }
+
+        if ($request->filled('date_to')) {
+            $query->whereHas('service', function($q) use ($request) {
+                $q->whereDate('starts_at', '<=', $request->date_to);
+            });
+        }
+
+        $records = $query->latest()->paginate(20)->withQueryString();
+        
+        // Get services for filter dropdown
+        $services = Service::orderBy('starts_at', 'desc')->get(['id', 'name', 'starts_at']);
+        
+        return view('attendances.index', compact('records', 'services'));
     }
 
     public function store(Request $request)

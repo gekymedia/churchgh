@@ -17,9 +17,23 @@ class LeadController extends Controller
     /**
      * Display a listing of leads.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $leads = Lead::latest()->paginate(15);
+        $query = Lead::query();
+
+        // Search functionality
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('phone', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('notes', 'like', "%{$search}%");
+            });
+        }
+
+        $leads = $query->latest()->paginate(15)->withQueryString();
+        
         return view('leads.index', compact('leads'));
     }
 
